@@ -1062,12 +1062,11 @@ class TestPerformanceTracker(unittest.TestCase):
 
         foo_event_1 = factory.create_trade('foo', 10.0, 20, start_dt)
         bar_event_1 = factory.create_trade('bar', 100.0, 200, start_dt)
-        txn = Transaction(sid=foo_event_1.sid,
-                          amount=-25,
-                          dt=foo_event_1.dt,
-                          price=10.0,
-                          commission=0.50)
-        foo_event_1.TRANSACTION = txn
+        txn_event_1 = Transaction(sid=foo_event_1.sid,
+                                  amount=-25,
+                                  dt=foo_event_1.dt,
+                                  price=10.0,
+                                  commission=0.50)
 
         foo_event_2 = factory.create_trade(
             'foo', 11.0, 20, start_dt + datetime.timedelta(minutes=1))
@@ -1078,6 +1077,7 @@ class TestPerformanceTracker(unittest.TestCase):
             'foo', 12.0, 30, start_dt + datetime.timedelta(minutes=2))
 
         tracker.process_event(foo_event_1)
+        tracker.process_event(txn_event_1)
         tracker.process_event(bar_event_1)
         messages = tracker.process_event(foo_event_2)
         tracker.process_event(bar_event_2)

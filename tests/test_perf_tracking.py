@@ -872,6 +872,11 @@ shares in position"
 
 
 class TestPerformanceTracker(unittest.TestCase):
+    
+    def setUp(self):
+
+        self.sim_params, self.dt, self.end_dt = \
+            create_random_simulation_parameters()
 
     NumDaysToDelete = collections.namedtuple(
         'NumDaysToDelete', ('start', 'middle', 'end'))
@@ -1061,6 +1066,11 @@ class TestPerformanceTracker(unittest.TestCase):
         tracker = perf.PerformanceTracker(sim_params)
 
         foo_event_1 = factory.create_trade('foo', 10.0, 20, start_dt)
+        order_event_1 = Order(**{
+                              'sid': foo_event_1.sid,
+                              'amount': -25,
+                              'dt': foo_event_1.dt
+                              })
         bar_event_1 = factory.create_trade('bar', 100.0, 200, start_dt)
         txn_event_1 = Transaction(sid=foo_event_1.sid,
                                   amount=-25,
@@ -1077,6 +1087,7 @@ class TestPerformanceTracker(unittest.TestCase):
             'foo', 12.0, 30, start_dt + datetime.timedelta(minutes=2))
 
         tracker.process_event(foo_event_1)
+        tracker.process_event(order_event_1)
         tracker.process_event(txn_event_1)
         tracker.process_event(bar_event_1)
         messages = tracker.process_event(foo_event_2)
@@ -1090,6 +1101,12 @@ class TestPerformanceTracker(unittest.TestCase):
         # Check that transactions aren't emitted for previous events.
         self.assertEquals(0, len(messages[1]['intraday_perf']['transactions']),
                           "The second message should have no transactions.")
+
+        self.assertEquals(1, len(messages[0]['intraday_perf']['orders']),
+                          "The first message should contain one orders.")
+        # Check that orders aren't emitted for previous events.
+        self.assertEquals(0, len(messages[1]['intraday_perf']['orders']),
+                          "The second message should have no orders.")
 
         # Ensure that period_close moves through time.
         # Also, ensure that the period_closes are the expected dts.
